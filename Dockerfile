@@ -1,9 +1,12 @@
 FROM python:3.12-slim
 
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONFAULTHANDLER=1 \
-    PIP_NO_CACHE_DIR=1 \
+    UV_SYSTEM_PYTHON=1 \
+    UV_NO_CACHE=1 \
     PATH="/home/appuser/.local/bin:${PATH}"
 
 WORKDIR /app
@@ -17,8 +20,7 @@ RUN useradd --create-home --shell /bin/bash appuser
 COPY pyproject.toml README.md /app/
 COPY src /app/src
 
-RUN python -m pip install --upgrade pip && \
-    python -m pip install ".[all]"
+RUN uv pip install --system ".[all]"
 
 USER appuser
 

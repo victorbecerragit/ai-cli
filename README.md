@@ -6,15 +6,19 @@ A Python CLI for inspecting browser-visible AI network traffic and chatting dire
 
 ---
 
-## Quick start
+## Quick start — users
+
+Install globally with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-git clone https://github.com/victorbecerragit/ai-cli.git
-cd ai-cli
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"          # core + dev tools
-pip install -e ".[probe]"        # add if you want Playwright probe mode
-playwright install chromium      # only needed for probe / bootstrap-chat
+uv tool install git+https://github.com/victorbecerragit/ai-cli.git
+ai-cli --help
+```
+
+Or install locally with all optional features:
+
+```bash
+uv pip install "ai-cli[all] @ git+https://github.com/victorbecerragit/ai-cli.git"
 ```
 
 ---
@@ -35,6 +39,13 @@ ai-cli probe "https://demo-bitnet-h0h8hcfqeqhrf5gf.canadacentral-01.azurewebsite
 ```
 
 This opens a headful Chromium window, records every XHR/fetch/WebSocket request, and prints the likely AI endpoints with their payloads.
+
+On Linux servers without a display, add `--headless`:
+
+```bash
+ai-cli probe "https://demo-bitnet-h0h8hcfqeqhrf5gf.canadacentral-01.azurewebsites.net/" \
+  --timeout 15 --output probe.json --headless
+```
 
 ### 2. Ask — one-shot question
 
@@ -60,11 +71,42 @@ ai-cli chat --profile demo
 
 Type `/help` for available commands (`/clear`, `/save`, `/debug`, `/exit`).
 
-### 5. Rich TUI (requires `.[tui]` extra)
+### 5. Rich TUI
 
 ```bash
-pip install -e ".[tui]"
 ai-cli tui --profile demo
+```
+
+---
+
+## Development setup
+
+```bash
+git clone https://github.com/victorbecerragit/ai-cli.git
+cd ai-cli
+uv sync --group dev        # install project + dev tools (ruff, mypy, pytest)
+uv run pytest              # run tests
+uv run ruff check .        # lint
+uv run ruff format .       # format
+uv run mypy src            # type-check
+```
+
+To run the CLI from source:
+
+```bash
+uv run ai-cli --help
+```
+
+---
+
+## Probe / browser setup
+
+`probe` and `bootstrap-chat` require Playwright (not installed by default):
+
+```bash
+uv sync --extra probe
+uv run playwright install chromium
+uv run ai-cli probe "https://example.com" --timeout 10
 ```
 
 ---
@@ -73,34 +115,21 @@ ai-cli tui --profile demo
 
 | Extra | What it adds |
 |-------|-------------|
-| `.[dev]` | ruff, mypy, pytest |
 | `.[probe]` | playwright ≥ 1.45 |
-| `.[tui]` | textual |
+| `.[tui]` | textual ≥ 0.70 |
 | `.[all]` | probe + tui |
 
 ---
-
-## Development
-
-```bash
-ruff check . && ruff format .
-mypy src
-pytest
-```
-
-Direct API mode (ask and chat):
-- best for daily CLI usage
-- faster and simpler after endpoint details are known
 
 ## Troubleshooting
 
 401 Unauthorized:
 - include required auth headers
-- run bootstrap-chat to refresh session cookies
+- run `bootstrap-chat` to refresh session cookies
 
 403 Forbidden:
-- site may require valid browser session context
-- retry with bootstrap-chat and saved profile
+- site may require a valid browser session context
+- retry with `bootstrap-chat` and a saved profile
 
 Missing cookies:
 - re-run bootstrap-chat

@@ -20,25 +20,23 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "pip"
+          enable-cache: true
 
-      - name: Install package and dev dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+      - name: Install dependencies
+        run: uv sync --group dev
 
       - name: Lint with ruff
-        run: ruff check src tests
+        run: uv run ruff check src tests
 
       - name: Type-check with mypy
-        run: mypy src/ai_cli
+        run: uv run mypy src/ai_cli
 
       - name: Run tests with pytest
-        run: pytest
+        run: uv run pytest
 
   docker:
     name: Build & Push Docker Image
