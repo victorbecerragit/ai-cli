@@ -1,0 +1,59 @@
+Screen {
+  layout: vertical;
+}
+
+#layout {
+  height: 1fr;
+}
+
+#sidebar {
+  width: 30;
+  min-width: 24;
+  border: heavy $surface;
+  padding: 1;
+}
+
+#chat-column {
+  width: 1fr;
+  border: heavy $surface;
+  padding: 1;
+}
+
+#chat-log {
+  height: 1fr;
+  border: round $primary;
+}
+
+#prompt-input {
+  margin-top: 1;
+}
+
+#debug-column {
+  width: 40;
+  min-width: 28;
+  border: heavy $surface;
+  padding: 1;
+}
+
+#debug-content {
+  height: 1fr;
+  border: round $accent;
+  padding: 1;
+}
+
+.section-title {
+  text-style: bold;
+  color: $accent;
+  margin-bottom: 1;
+}
+
+#sidebar-help {
+  margin-top: 1;
+  color: $text-muted;
+}
+
+@media (max-width: 120) {
+  #debug-column {
+    display: none;
+  }
+}

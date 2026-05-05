@@ -1,0 +1,77 @@
+{
+  "meta": {
+    "tool": "netpeek",
+    "captured_at": "2026-05-05T08:40:40.412927+00:00",
+    "url": "https://demo-bitnet-h0h8hcfqeqhrf5gf.canadacentral-01.azurewebsites.net/",
+    "filters": {
+      "types": [
+        "fetch",
+        "websocket",
+        "xhr"
+      ],
+      "contains": null,
+      "ai_paths": true,
+      "ai_path_keywords": [
+        "/chat",
+        "/api",
+        "/completion",
+        "/completions",
+        "websocket"
+      ],
+      "input_selector": "textarea, [contenteditable=\"true\"], input[type=\"text\"]",
+      "submit_key": "Enter",
+      "wait_after_done": 1.5,
+      "timeout_seconds": 30
+    }
+  },
+  "summary": {
+    "total_requests": 1,
+    "total_xhr_fetch": 1,
+    "total_websockets": 0,
+    "matched_items": 2
+  },
+  "events": [
+    {
+      "kind": "http_request",
+      "timestamp": "2026-05-05T08:40:35.584927+00:00",
+      "method": "POST",
+      "url": "https://demo-bitnet-h0h8hcfqeqhrf5gf.canadacentral-01.azurewebsites.net/completion",
+      "resource_type": "fetch",
+      "status": null,
+      "request_headers": {
+        "referer": "https://demo-bitnet-h0h8hcfqeqhrf5gf.canadacentral-01.azurewebsites.net/",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36",
+        "content-type": "application/json"
+      },
+      "response_headers": {},
+      "request_body_preview": "{\"messages\":[{\"role\":\"user\",\"content\":\"Hello from CLI, what model are you?\"}],\"userId\":\"user_ok8aesxtrx\",\"chatId\":\"chat_2rw90d2hmu1\",\"device\":\"cpu\"}",
+      "response_body_preview": null,
+      "ai_answer_preview": null,
+      "ai_answer_source": null,
+      "ai_stream_finished": null,
+      "message": null
+    },
+    {
+      "kind": "http_response",
+      "timestamp": "2026-05-05T08:40:38.683534+00:00",
+      "method": "POST",
+      "url": "https://demo-bitnet-h0h8hcfqeqhrf5gf.canadacentral-01.azurewebsites.net/completion",
+      "resource_type": "fetch",
+      "status": 200,
+      "request_headers": {
+        "referer": "https://demo-bitnet-h0h8hcfqeqhrf5gf.canadacentral-01.azurewebsites.net/",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36",
+        "content-type": "application/json"
+      },
+      "response_headers": {
+        "content-type": "text/event-stream; charset=utf-8"
+      },
+      "request_body_preview": "{\"messages\":[{\"role\":\"user\",\"content\":\"Hello from CLI, what model are you?\"}],\"userId\":\"user_ok8aesxtrx\",\"chatId\":\"chat_2rw90d2hmu1\",\"device\":\"cpu\"}",
+      "response_body_preview": "data: {\"content\": \"Hello\", \"finished\": false}\n\ndata: {\"content\": \"!\", \"finished\": false}\n\ndata: {\"content\": \" I\", \"finished\": false}\n\ndata: {\"content\": \" am\", \"finished\": false}\n\ndata: {\"content\": \" a\", \"finished\": false}\n\ndata: {\"content\": \" \", \"finished\": false}\n\ndata: {\"content\": \"1\", \"finished\":... <truncated>",
+      "ai_answer_preview": "Hello! I am a 1-bit Large Language Model (1-bit LLM) with 2 billion parameters, trained entirely from scratch by the Microsoft BitNet team. I rely solely on my own training to generate responses. How can I assist you today?",
+      "ai_answer_source": "sse",
+      "ai_stream_finished": true,
+      "message": null
+    }
+  ]
+}

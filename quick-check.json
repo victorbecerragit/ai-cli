@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "tool": "netpeek",
+    "captured_at": "2026-05-05T08:25:07.549723+00:00",
+    "url": "https://demo-bitnet-h0h8hcfqeqhrf5gf.canadacentral-01.azurewebsites.net/",
+    "filters": {
+      "types": [
+        "fetch",
+        "websocket",
+        "xhr"
+      ],
+      "contains": null,
+      "ai_paths": true,
+      "ai_path_keywords": [
+        "/chat",
+        "/api",
+        "/completion",
+        "/completions",
+        "websocket"
+      ],
+      "timeout_seconds": 5
+    }
+  },
+  "summary": {
+    "total_requests": 0,
+    "total_xhr_fetch": 0,
+    "total_websockets": 0,
+    "matched_items": 0
+  },
+  "events": []
+}

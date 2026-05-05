@@ -1,0 +1,11 @@
+{
+  "meta": {
+    "tool": "mini-devtools-probe",
+    "captured_at": "2026-05-05T09:32:25.462421+00:00",
+    "url": "https://demo-bitnet-h0h8hcfqeqhrf5gf.canadacentral-01.azurewebsites.net/",
+    "timeout_seconds": 2,
+    "contains": null
+  },
+  "likely_endpoints": [],
+  "events": []
+}
