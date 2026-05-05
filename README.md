@@ -25,10 +25,10 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-2. Install dependencies:
+2. Install in editable mode with optional extras:
 
 ```bash
-pip install -r requirements.txt
+pip install -e ".[dev,all]"
 ```
 
 3. Install Chromium for Playwright:
@@ -36,6 +36,16 @@ pip install -r requirements.txt
 ```bash
 playwright install chromium
 ```
+
+4. Verify CLI entrypoint:
+
+```bash
+ai-cli --help
+```
+
+Notes:
+- `.[all]` installs both probe and TUI dependencies.
+- `.[dev]` installs linting, typing, and test tooling.
 
 ## Command Overview
 
@@ -61,6 +71,15 @@ If `ai-cli` is not found, activate the virtualenv first:
 
 ```bash
 source .venv/bin/activate
+```
+
+## Development Commands
+
+```bash
+ruff check .
+ruff format .
+mypy src
+pytest
 ```
 
 ## Probe Mode

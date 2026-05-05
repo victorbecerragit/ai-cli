@@ -7,8 +7,8 @@ from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.widgets import Footer, Header, Input, ListView
 
-from tui_controller import TuiController
-from tui_widgets import ChatPane, DebugPane, ProfilesPane
+from .tui_controller import TuiController
+from .tui_widgets import ChatPane, DebugPane, ProfilesPane
 
 
 class AiCliTui(App[None]):

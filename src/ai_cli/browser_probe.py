@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
 from playwright.sync_api import Playwright, Request, Response, WebSocket, sync_playwright
 
-from models import ProbeEvent
-from utils import now_iso, truncate, write_json
+from .models import ProbeEvent
+from .utils import now_iso, truncate, write_json
 
 HTTP_HEADER_ALLOWLIST = {
     "content-type",
@@ -202,7 +201,8 @@ def _capture(
         )
         events.append(open_event)
 
-        def on_sent(payload: str) -> None:
+        def on_sent(payload: bytes | str) -> None:
+            normalized_payload = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else payload
             events.append(
                 ProbeEvent(
                     kind="ws_send",
@@ -210,12 +210,13 @@ def _capture(
                     url=ws.url,
                     path=_path_from_url(ws.url),
                     resource_type="websocket",
-                    message=truncate(payload),
+                    message=truncate(normalized_payload),
                     transport="websocket",
                 )
             )
 
-        def on_recv(payload: str) -> None:
+        def on_recv(payload: bytes | str) -> None:
+            normalized_payload = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else payload
             events.append(
                 ProbeEvent(
                     kind="ws_recv",
@@ -223,7 +224,7 @@ def _capture(
                     url=ws.url,
                     path=_path_from_url(ws.url),
                     resource_type="websocket",
-                    message=truncate(payload),
+                    message=truncate(normalized_payload),
                     transport="websocket",
                 )
             )

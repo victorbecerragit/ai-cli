@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin, urlparse
 
-
 MAX_PREVIEW_CHARS = 500
 
 
@@ -31,7 +30,7 @@ def parse_json_safe(text: str) -> Any:
 
 
 def as_jsonable(value: Any) -> Any:
-    if is_dataclass(value):
+    if is_dataclass(value) and not isinstance(value, type):
         return asdict(value)
     if isinstance(value, list):
         return [as_jsonable(v) for v in value]

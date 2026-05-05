@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from models import Profile
-from utils import parse_json_safe, read_json, write_json
+from .models import Profile
+from .utils import parse_json_safe, read_json, write_json
 
 PROFILES_PATH = Path("profiles.json")
 SUPPORTED_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE"}

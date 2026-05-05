@@ -4,7 +4,7 @@ from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.widgets import ListItem, ListView, Static
 
-from models import Profile
+from ..models import Profile
 
 
 class ProfilesPane(Vertical):

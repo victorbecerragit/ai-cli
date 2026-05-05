@@ -1,0 +1,17 @@
+.git
+.github
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.venv
+dist
+build
+*.egg-info
+tests
+ai-cli-run.json
+quick-check.json
+quick-probe.json

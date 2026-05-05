@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from api_client import ApiClient
-from models import ApiResult, Profile
-from profile_manager import get_profile, load_profiles, profile_from_dict
-from utils import build_url, deep_replace_tokens, now_iso, write_json
+from .api_client import ApiClient
+from .models import ApiResult, Profile
+from .profile_manager import get_profile, load_profiles, profile_from_dict
+from .utils import build_url, deep_replace_tokens, now_iso, write_json
 
 
 class TuiController:

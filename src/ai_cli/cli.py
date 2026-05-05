@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Any, Optional
 
 import typer
@@ -9,11 +8,11 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from api_client import ApiClient
-from browser_probe import bootstrap_session, probe_url
-from chat_ui import run_chat
-from models import Profile
-from profile_manager import (
+from .api_client import ApiClient
+from .browser_probe import bootstrap_session, probe_url
+from .chat_ui import run_chat
+from .models import Profile
+from .profile_manager import (
     PROFILES_PATH,
     add_profile,
     delete_profile,
@@ -25,7 +24,7 @@ from profile_manager import (
     update_profile,
     validate_profile,
 )
-from utils import parse_cookie_pairs, parse_header_pairs
+from .utils import parse_cookie_pairs, parse_header_pairs
 
 app = typer.Typer(help="mini-DevTools: Browser probe + direct CLI chat client")
 profiles_app = typer.Typer(help="Manage reusable AI endpoint profiles")
@@ -39,7 +38,7 @@ def cmd_tui(
     profile: Optional[str] = typer.Option(None, help="Profile name to preselect"),
     debug: bool = typer.Option(True, help="Show debug panel on startup"),
 ) -> None:
-    from tui_app import AiCliTui
+    from .tui_app import AiCliTui
 
     AiCliTui(start_profile=profile, debug_visible=debug).run()
 

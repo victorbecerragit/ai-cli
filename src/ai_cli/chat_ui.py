@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
 
-from api_client import ApiClient
-from models import Profile
-from utils import now_iso, write_json
-
+from .api_client import ApiClient
+from .models import Profile
+from .utils import now_iso, write_json
 
 console = Console()
 

@@ -5,8 +5,8 @@ from typing import Any
 
 import requests
 
-from models import ApiResult, Profile
-from utils import build_url, deep_replace_tokens, get_by_dotted_path, parse_json_safe, truncate
+from .models import ApiResult, Profile
+from .utils import build_url, deep_replace_tokens, get_by_dotted_path, parse_json_safe, truncate
 
 COMMON_JSON_TEXT_FIELDS = [
     "text",
