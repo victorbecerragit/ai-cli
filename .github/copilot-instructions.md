@@ -4,6 +4,7 @@ This repository contains a small educational Python CLI for inspecting browser-v
 
 Guidelines:
 - Prefer Python 3.11+.
+- Prefer uv sync, uv run, and uv tool install over manual venv and pip commands in this repository.
 - Use Playwright sync API unless async is clearly simpler.
 - Keep Chromium headful by default for learning/debugging.
 - Focus on XHR, fetch, and WebSocket visibility similar to a basic DevTools Network tab.
