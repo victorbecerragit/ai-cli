@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
-from playwright.sync_api import Playwright, Request, Response, WebSocket, sync_playwright
+if TYPE_CHECKING:
+    from playwright.sync_api import Playwright, Request, Response, WebSocket
 
 from .models import ProbeEvent
 from .utils import now_iso, truncate, write_json
@@ -61,6 +62,8 @@ def probe_url(
     events: list[ProbeEvent] = []
     likely_ai: dict[str, dict[str, Any]] = {}
 
+    from playwright.sync_api import sync_playwright  # noqa: PLC0415
+
     with sync_playwright() as pw:
         _capture(pw, url, timeout_seconds, headless, events)
 
@@ -94,6 +97,8 @@ def probe_url(
 
 
 def bootstrap_session(url: str, endpoint_hint: str | None = None, headless: bool = False) -> dict[str, Any]:
+    from playwright.sync_api import sync_playwright  # noqa: PLC0415
+
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=headless)
         context = browser.new_context()
