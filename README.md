@@ -1,5 +1,12 @@
 # ai-cli
 
+[![CI](https://github.com/victorbecerragit/ai-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/victorbecerragit/ai-cli/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Docker Hub](https://img.shields.io/docker/pulls/victorbecerra/ai-cli?logo=docker&logoColor=white)](https://hub.docker.com/r/victorbecerra/ai-cli)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+
 A Python CLI for inspecting browser-visible AI network traffic and chatting directly with discovered endpoints — educational, transparent, no magic.
 
 **Modes:** `probe` (Playwright network tab) · `ask` (one-shot HTTP) · `chat` (interactive REPL) · `tui` (rich terminal UI) · `bootstrap-chat` (browser session → direct HTTP)
@@ -35,6 +42,9 @@ cd ai-cli
 
 # Base install (ask, chat, profiles only)
 uv tool install . --force
+
+# If you are actively developing, use editable mode so new code is picked up immediately
+uv tool install --editable . --force
 
 # With TUI (recommended)
 uv sync --extra all
@@ -114,6 +124,64 @@ Type `/help` for available commands (`/clear`, `/save`, `/debug`, `/exit`).
 ```bash
 ai-cli tui --profile demo
 ```
+
+---
+
+## Provider/model aliases
+
+`ai-cli` supports lightweight provider/model resolution using either:
+- a saved profile field: `model`
+- a CLI override: `--model`
+
+For Google Gemma aliases, the CLI resolves provider settings automatically (base URL, endpoint, method, payload format, response parsing).
+
+Supported Google aliases:
+- `google/gemma4` -> `gemma-4-26b-a4b-it`
+- `google/gemma-4-26b-a4b-it` -> `gemma-4-26b-a4b-it`
+- `google/gemma-4-31b-it` -> `gemma-4-31b-it`
+
+### Add a Google Gemma profile
+
+```bash
+ai-cli profiles add google-gemma4 --model google/gemma4
+```
+
+### Ask using the profile
+
+```bash
+ai-cli ask --profile google-gemma4 --prompt "Hello, Gemma 4!"
+```
+
+### Override model on any profile
+
+```bash
+ai-cli ask --profile demo --model google/gemma4 --prompt "Summarize this"
+```
+
+### API key setup (recommended)
+
+Google requests use your `GEMINI_API_KEY` environment variable.
+
+Fish (persistent):
+
+```bash
+set -Ux GEMINI_API_KEY "your-real-key"
+```
+
+Bash/Zsh (persistent):
+
+```bash
+echo 'export GEMINI_API_KEY="your-real-key"' >> ~/.bashrc
+# or ~/.zshrc
+```
+
+Then open a new shell and run:
+
+```bash
+ai-cli ask --profile google-gemma4 --prompt "Hello"
+```
+
+`ai-cli profiles list` shows resolved `base_url`/`endpoint` for alias-backed profiles.
 
 ---
 

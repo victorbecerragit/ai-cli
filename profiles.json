@@ -28,6 +28,36 @@
       "timeout": 60,
       "notes": null,
       "stream": true
+    },
+    "google-gemma4": {
+      "base_url": "",
+      "endpoint": "/completion",
+      "method": "POST",
+      "payload_template": {
+        "messages": "{{messages}}",
+        "userId": "cli_user",
+        "chatId": "cli_chat",
+        "device": "cpu"
+      },
+      "headers": {},
+      "cookies": {},
+      "prompt_field_candidates": [
+        "messages",
+        "prompt",
+        "message",
+        "input",
+        "query"
+      ],
+      "response_text_paths": [
+        "answer",
+        "response",
+        "content",
+        "choices.0.message.content"
+      ],
+      "timeout": 60,
+      "notes": null,
+      "stream": true,
+      "model": "google/gemma4"
     }
   }
 }
