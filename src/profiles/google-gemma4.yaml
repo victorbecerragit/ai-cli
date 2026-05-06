@@ -1,0 +1,12 @@
+# profiles/google-gemma4.yaml
+name: google-gemma4
+model: google/gemma4
+base_url: ""
+endpoint: ""
+method: POST
+headers: {}
+cookies: {}
+payload_template: {}
+response_text_paths: []
+timeout: 120
+stream: false

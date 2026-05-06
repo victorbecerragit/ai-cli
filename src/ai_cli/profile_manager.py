@@ -7,6 +7,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from .models import Profile
+from .provider_registry import resolve_model_alias
 from .utils import parse_json_safe, read_json, write_json
 
 PROFILES_PATH = Path("profiles.json")
@@ -79,6 +80,7 @@ def profile_from_dict(name: str, raw: dict[str, Any]) -> Profile:
         timeout=int(raw.get("timeout", 60)),
         notes=raw.get("notes"),
         stream=bool(raw.get("stream", True)),
+        model=raw.get("model") or None,
     )
 
 
@@ -95,21 +97,26 @@ def validate_profile(profile: Profile, strict: bool = False) -> tuple[list[str],
     if not profile.name.strip():
         errors.append("name is required")
 
-    if not profile.base_url.strip():
-        errors.append("base_url is required")
-    else:
-        parsed = urlparse(profile.base_url)
-        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-            errors.append("base_url must be a valid http(s) URL")
+    # When a model alias is registered, the provider registry supplies base_url/endpoint.
+    selected_model = profile.model or profile.name
+    provider_spec = resolve_model_alias(selected_model)
 
-    if not profile.endpoint:
-        errors.append("endpoint is required")
-    elif not (
-        profile.endpoint.startswith("/")
-        or profile.endpoint.startswith("http://")
-        or profile.endpoint.startswith("https://")
-    ):
-        errors.append("endpoint must start with '/' or be an absolute URL")
+    if not provider_spec:
+        if not profile.base_url.strip():
+            errors.append("base_url is required")
+        else:
+            parsed = urlparse(profile.base_url)
+            if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+                errors.append("base_url must be a valid http(s) URL")
+
+        if not profile.endpoint:
+            errors.append("endpoint is required")
+        elif not (
+            profile.endpoint.startswith("/")
+            or profile.endpoint.startswith("http://")
+            or profile.endpoint.startswith("https://")
+        ):
+            errors.append("endpoint must start with '/' or be an absolute URL")
 
     if profile.method.upper() not in SUPPORTED_METHODS:
         errors.append(
@@ -131,10 +138,11 @@ def validate_profile(profile: Profile, strict: bool = False) -> tuple[list[str],
     if profile.timeout < 1:
         errors.append("timeout must be >= 1")
 
-    template_json = json.dumps(profile.payload_template)
-    has_prompt_placeholder = "{{prompt}}" in template_json or "{{messages}}" in template_json
-    if not has_prompt_placeholder:
-        errors.append("payload_template must include {{prompt}} or {{messages}}")
+    if not provider_spec:
+        template_json = json.dumps(profile.payload_template)
+        has_prompt_placeholder = "{{prompt}}" in template_json or "{{messages}}" in template_json
+        if not has_prompt_placeholder:
+            errors.append("payload_template must include {{prompt}} or {{messages}}")
 
     if strict and not profile.response_text_paths:
         warnings.append("strict mode: response_text_paths is empty")

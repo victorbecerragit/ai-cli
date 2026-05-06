@@ -74,6 +74,7 @@ def _merge_profile_with_overrides(
         timeout=timeout or base.timeout,
         notes=base.notes,
         stream=base.stream if stream is None else stream,
+        model=base.model,
     )
 
 
@@ -140,6 +141,7 @@ def cmd_ask(
     cookie: list[str] = typer.Option([], help="Cookie pair: key=value"),
     timeout: Optional[int] = typer.Option(None, help="Request timeout seconds override"),
     stream: Optional[bool] = typer.Option(None, help="Enable/disable streaming support"),
+    model: Optional[str] = typer.Option(None, help="Model alias override (e.g. google/gemma4)"),
 ) -> None:
     parsed_headers = parse_header_pairs(header)
     parsed_cookies = parse_cookie_pairs(cookie)
@@ -160,7 +162,7 @@ def cmd_ask(
         _render_validation(resolved.name, errors, warnings)
         raise typer.Exit(code=1)
 
-    client = ApiClient(resolved)
+    client = ApiClient(resolved, model_override=model)
     result = client.ask(prompt)
 
     panel_title = f"assistant (status={result.status_code}, {result.elapsed_ms}ms)"
@@ -182,6 +184,7 @@ def cmd_chat(
     timeout: Optional[int] = typer.Option(None, help="Request timeout seconds override"),
     stream: Optional[bool] = typer.Option(None, help="Enable/disable streaming support"),
     debug: bool = typer.Option(False, help="Start chat with debug output enabled"),
+    model: Optional[str] = typer.Option(None, help="Model alias override (e.g. google/gemma4)"),
 ) -> None:
     from .chat_ui import run_chat
 
@@ -204,7 +207,7 @@ def cmd_chat(
         _render_validation(resolved.name, errors, warnings)
         raise typer.Exit(code=1)
 
-    client = ApiClient(resolved)
+    client = ApiClient(resolved, model_override=model)
     run_chat(client, resolved, debug=debug)
 
 
@@ -290,6 +293,8 @@ def cmd_bootstrap_chat(
 
 @profiles_app.command("list")
 def profiles_list() -> None:
+    from .provider_registry import resolve_model_alias as _resolve
+
     profiles = load_profiles()
 
     table = Table(title=f"Profiles ({PROFILES_PATH})")
@@ -298,10 +303,16 @@ def profiles_list() -> None:
     table.add_column("endpoint")
     table.add_column("method")
     table.add_column("timeout")
+    table.add_column("model")
 
     for name in sorted(profiles.keys()):
         profile = profile_from_dict(name, profiles[name])
-        table.add_row(name, profile.base_url, profile.endpoint, profile.method, str(profile.timeout))
+        selected_model = profile.model or profile.name
+        spec = _resolve(selected_model)
+        display_base_url = spec.base_url if spec else profile.base_url
+        display_endpoint = spec.endpoint if spec else profile.endpoint
+        model_label = profile.model or ""
+        table.add_row(name, display_base_url, display_endpoint, profile.method, str(profile.timeout), model_label)
 
     console.print(table)
 
@@ -328,8 +339,11 @@ def profiles_add(
     payload_template: Optional[str] = typer.Option(None, help="Payload template JSON string"),
     notes: Optional[str] = typer.Option(None, help="Optional notes"),
     stream: bool = typer.Option(True, help="Enable streaming support"),
+    model: Optional[str] = typer.Option(None, help="Model alias (e.g. google/gemma4)"),
 ) -> None:
-    actual_base_url = base_url or typer.prompt("Base URL")
+    from .provider_registry import resolve_model_alias as _resolve
+    is_registered = _resolve(model or name) is not None
+    actual_base_url = base_url or ("" if is_registered else typer.prompt("Base URL"))
     parsed_headers = parse_header_pairs(header)
     parsed_cookies = parse_cookie_pairs(cookie)
 
@@ -356,6 +370,7 @@ def profiles_add(
         timeout=timeout,
         notes=notes,
         stream=stream,
+        model=model,
     )
 
     errors, warnings = validate_profile(profile)

@@ -20,6 +20,7 @@ class Profile:
     timeout: int = 60
     notes: str | None = None
     stream: bool = True
+    model: str | None = None
 
 
 @dataclass
