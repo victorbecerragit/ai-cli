@@ -12,7 +12,6 @@ from .models import ApiResult, Profile
 from .provider_registry import ProviderSpec, resolve_model_alias
 from .utils import build_url, deep_replace_tokens, get_by_dotted_path, parse_json_safe, truncate
 
-
 COMMON_JSON_TEXT_FIELDS = [
     "text",
     "response",
