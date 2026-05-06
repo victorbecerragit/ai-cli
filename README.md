@@ -1,5 +1,12 @@
 # ai-cli
 
+[![CI](https://github.com/victorbecerragit/ai-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/victorbecerragit/ai-cli/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Docker Hub](https://img.shields.io/docker/pulls/victorbecerra/ai-cli?logo=docker&logoColor=white)](https://hub.docker.com/r/victorbecerra/ai-cli)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+
 A Python CLI for inspecting browser-visible AI network traffic and chatting directly with discovered endpoints — educational, transparent, no magic.
 
 **Modes:** `probe` (Playwright network tab) · `ask` (one-shot HTTP) · `chat` (interactive REPL) · `tui` (rich terminal UI) · `bootstrap-chat` (browser session → direct HTTP)
