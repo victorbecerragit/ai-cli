@@ -99,8 +99,11 @@ class AiCliTui(App[None]):
 
         profile = self.controller.select_profile(selected_name)
         if profile:
+            self.controller.clear_chat_state()
             self._render_debug()
-            self.query_one(ChatPane).append_system(f"Active profile: {selected_name}")
+            chat_pane = self.query_one(ChatPane)
+            chat_pane.clear_chat()
+            chat_pane.append_system(f"Active profile: {selected_name}")
 
     def action_clear_chat(self) -> None:
         self.controller.clear_chat_state()

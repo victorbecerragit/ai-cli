@@ -114,7 +114,7 @@ ai-cli ask --profile demo --prompt "Explain recursion in one sentence"
 ### 4. Interactive chat REPL
 
 ```bash
-ai-cli chat --profile demo
+ai-cli tui --profile google-gemma4
 ```
 
 Type `/help` for available commands (`/clear`, `/save`, `/debug`, `/exit`).
@@ -122,8 +122,10 @@ Type `/help` for available commands (`/clear`, `/save`, `/debug`, `/exit`).
 ### 5. Rich TUI
 
 ```bash
-ai-cli tui --profile demo
+ai-cli tui --profile 
 ```
+
+![ai-cli TUI](src/images/tui-cli.png)
 
 ---
 
