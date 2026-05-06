@@ -37,6 +37,7 @@ cd ai-cli
 uv tool install . --force
 
 # With TUI (recommended)
+uv sync --extra all
 uv tool install ".[tui]" --force
 
 # With all features (probe + tui)
