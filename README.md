@@ -15,7 +15,15 @@ A Python CLI for inspecting browser-visible AI network traffic and chatting dire
 Install globally with [uv](https://docs.astral.sh/uv/):
 
 ```bash
+# Base install (ask, chat, profiles only)
 uv tool install git+https://github.com/victorbecerragit/ai-cli.git
+
+# With TUI (recommended)
+uv tool install "git+https://github.com/victorbecerragit/ai-cli.git[tui]"
+
+# With all features (probe + tui)
+uv tool install "git+https://github.com/victorbecerragit/ai-cli.git[all]"
+
 ai-cli --help
 ```
 
@@ -24,7 +32,16 @@ Install from a local clone (uses your checked-out source):
 ```bash
 git clone https://github.com/victorbecerragit/ai-cli.git
 cd ai-cli
+
+# Base install (ask, chat, profiles only)
 uv tool install . --force
+
+# With TUI (recommended)
+uv tool install ".[tui]" --force
+
+# With all features (probe + tui)
+uv tool install ".[all]" --force
+
 ai-cli --help
 ```
 

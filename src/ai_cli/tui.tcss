@@ -51,9 +51,3 @@ Screen {
   margin-top: 1;
   color: $text-muted;
 }
-
-@media (max-width: 120) {
-  #debug-column {
-    display: none;
-  }
-}

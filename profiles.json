@@ -1,38 +1,7 @@
 {
   "profiles": {
-    "demo": {
-      "base_url": "https://demo-bitnet-h0h8hcfqeqhrf5gf.canadacentral-01.azurewebsites.net/",
-      "endpoint": "/completion",
-      "method": "POST",
-      "payload_template": {
-        "messages": "{{messages}}",
-        "userId": "cli_user",
-        "chatId": "cli_chat",
-        "device": "cpu"
-      },
-      "headers": {
-        "content-type": "application/json"
-      },
-      "cookies": {},
-      "prompt_field_candidates": [
-        "messages",
-        "prompt",
-        "message",
-        "input",
-        "query"
-      ],
-      "response_text_paths": [
-        "content",
-        "answer",
-        "response",
-        "choices.0.message.content"
-      ],
-      "timeout": 60,
-      "notes": "Legacy demo profile",
-      "stream": true
-    },
-    "bitnet": {
-      "base_url": "https://demo-bitnet-h0h8hcfqeqhrf5gf.canadacentral-01.azurewebsites.net/",
+    "bitnet-profile": {
+      "base_url": "https://demo-bitnet-h0h8hcfqeqhrf5gf.canadacentral-01.azurewebsites.net",
       "endpoint": "/completion",
       "method": "POST",
       "payload_template": {
