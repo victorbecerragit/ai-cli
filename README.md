@@ -6,6 +6,10 @@ A Python CLI for inspecting browser-visible AI network traffic and chatting dire
 
 ---
 
+# Demo - Short demo showing profile setup and interactive chat.
+
+<a href="https://asciinema.org/a/1020493" target="_blank"><img src="https://asciinema.org/a/1020493.svg" /></a>
+
 ## Quick start — users
 
 Install globally with [uv](https://docs.astral.sh/uv/):
