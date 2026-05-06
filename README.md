@@ -15,6 +15,22 @@ uv tool install git+https://github.com/victorbecerragit/ai-cli.git
 ai-cli --help
 ```
 
+Install from a local clone (uses your checked-out source):
+
+```bash
+git clone https://github.com/victorbecerragit/ai-cli.git
+cd ai-cli
+uv tool install . --force
+ai-cli --help
+```
+
+If `ai-cli` is not found after install, ensure your uv tool bin directory is on `PATH`:
+
+```bash
+command -v ai-cli
+uv tool dir
+```
+
 Or install locally with all optional features:
 
 ```bash
