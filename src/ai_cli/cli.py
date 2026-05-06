@@ -9,8 +9,6 @@ from rich.panel import Panel
 from rich.table import Table
 
 from .api_client import ApiClient
-from .browser_probe import bootstrap_session, probe_url
-from .chat_ui import run_chat
 from .models import Profile
 from .profile_manager import (
     PROFILES_PATH,
@@ -20,7 +18,6 @@ from .profile_manager import (
     load_profiles,
     parse_payload_template,
     profile_from_dict,
-    save_profiles,
     update_profile,
     validate_profile,
 )
@@ -109,6 +106,8 @@ def cmd_probe(
     output: str = typer.Option("probe-output.json", help="JSON output path"),
     headless: bool = typer.Option(False, help="Run Chromium headless"),
 ) -> None:
+    from .browser_probe import probe_url
+
     payload = probe_url(url=url, timeout_seconds=timeout, headless=headless, contains=contains, output=output)
 
     endpoints = payload.get("likely_endpoints", [])
@@ -184,6 +183,8 @@ def cmd_chat(
     stream: Optional[bool] = typer.Option(None, help="Enable/disable streaming support"),
     debug: bool = typer.Option(False, help="Start chat with debug output enabled"),
 ) -> None:
+    from .chat_ui import run_chat
+
     parsed_headers = parse_header_pairs(header)
     parsed_cookies = parse_cookie_pairs(cookie)
 
@@ -216,6 +217,9 @@ def cmd_bootstrap_chat(
     timeout: int = typer.Option(60, help="Request timeout seconds"),
     headless: bool = typer.Option(False, help="Run browser headless"),
 ) -> None:
+    from .browser_probe import bootstrap_session
+    from .chat_ui import run_chat
+
     console.print("Bootstrapping browser session...")
     session = bootstrap_session(url=url, endpoint_hint=endpoint, headless=headless)
 
@@ -256,22 +260,28 @@ def cmd_bootstrap_chat(
             _render_validation(save_profile_name, errors, warnings)
             raise typer.Exit(code=1)
 
-        profiles = load_profiles()
-        profiles[save_profile_name] = {
-            "base_url": to_store.base_url,
-            "endpoint": to_store.endpoint,
-            "method": to_store.method,
-            "payload_template": to_store.payload_template,
-            "headers": to_store.headers,
-            "cookies": to_store.cookies,
-            "prompt_field_candidates": to_store.prompt_field_candidates,
-            "response_text_paths": to_store.response_text_paths,
-            "timeout": to_store.timeout,
-            "notes": to_store.notes,
-            "stream": to_store.stream,
-        }
-        save_profiles(profiles)
-        console.print(f"Saved profile: {save_profile_name}")
+        existing = get_profile(save_profile_name)
+        if existing:
+            update_profile(
+                save_profile_name,
+                {
+                    "base_url": to_store.base_url,
+                    "endpoint": to_store.endpoint,
+                    "method": to_store.method,
+                    "payload_template": to_store.payload_template,
+                    "headers": to_store.headers,
+                    "cookies": to_store.cookies,
+                    "prompt_field_candidates": to_store.prompt_field_candidates,
+                    "response_text_paths": to_store.response_text_paths,
+                    "timeout": to_store.timeout,
+                    "notes": to_store.notes,
+                    "stream": to_store.stream,
+                },
+            )
+            console.print(f"Updated profile: {save_profile_name}")
+        else:
+            add_profile(to_store)
+            console.print(f"Saved profile: {save_profile_name}")
 
     client = ApiClient(resolved)
     console.print(Panel("Bootstrap complete. Starting interactive chat.", title="bootstrap-chat", border_style="cyan"))
