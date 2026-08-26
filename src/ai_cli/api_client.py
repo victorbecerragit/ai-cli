@@ -42,7 +42,9 @@ class ApiClient:
         self.timeout_seconds = timeout_seconds or profile.timeout
         self.extra_headers = extra_headers or {}
 
-    def ask(self, prompt: str, history: list[dict[str, str]] | None = None, stream: bool | None = None) -> ApiResult:
+    def ask(
+        self, prompt: str, history: list[dict[str, str]] | None = None, stream: bool | None = None
+    ) -> ApiResult:
         history = history or []
         method, url, payload, headers, response_text_paths, use_stream = self._prepare_request(
             prompt, history, stream
@@ -80,7 +82,9 @@ class ApiClient:
             content_type=content_type,
         )
 
-    def ask_stream(self, prompt: str, history: list[dict[str, str]] | None = None) -> Generator[str, None, None]:
+    def ask_stream(
+        self, prompt: str, history: list[dict[str, str]] | None = None
+    ) -> Generator[str, None, None]:
         history = history or []
         method, url, payload, headers, response_text_paths, use_stream = self._prepare_request(
             prompt, history, stream=True
@@ -116,7 +120,10 @@ class ApiClient:
         method = self.profile.method
         response_text_paths = list(self.profile.response_text_paths)
 
-        headers = {"accept": "application/json, text/event-stream, text/plain, */*", "content-type": "application/json"}
+        headers = {
+            "accept": "application/json, text/event-stream, text/plain, */*",
+            "content-type": "application/json",
+        }
         headers.update(self.profile.headers)
         headers.update(self.extra_headers)
 
@@ -191,7 +198,9 @@ class ApiClient:
 
         return self._build_payload(prompt, history)
 
-    def _inject_provider_auth(self, headers: dict[str, str], provider_spec: ProviderSpec) -> dict[str, str]:
+    def _inject_provider_auth(
+        self, headers: dict[str, str], provider_spec: ProviderSpec
+    ) -> dict[str, str]:
         if not provider_spec.auth_env:
             return headers
 
@@ -207,7 +216,9 @@ class ApiClient:
         return headers
 
 
-def _consume_sse(response: requests.Response, response_text_paths: list[str]) -> tuple[str, str | None]:
+def _consume_sse(
+    response: requests.Response, response_text_paths: list[str]
+) -> tuple[str, str | None]:
     chunks: list[str] = []
     raw_lines: list[str] = []
 
@@ -221,7 +232,7 @@ def _consume_sse(response: requests.Response, response_text_paths: list[str]) ->
             continue
 
         # Extract everything after "data:"
-        payload = line.strip()[len("data:"):].strip()
+        payload = line.strip()[len("data:") :].strip()
         # Google sometimes ends with a line that isn't exactly [DONE] but empty
         if payload.upper() == "[DONE]" or not payload:
             break
@@ -237,7 +248,7 @@ def _consume_sse(response: requests.Response, response_text_paths: list[str]) ->
                         chunks.append(val)
                     found = True
                     break
-            
+
             if found:
                 continue
 
@@ -257,7 +268,10 @@ def _consume_sse(response: requests.Response, response_text_paths: list[str]) ->
     raw_preview = truncate("\n".join(raw_lines))
     return (combined or "<empty response>"), raw_preview
 
-def _yield_sse_text(response: requests.Response, response_text_paths: list[str]) -> Generator[str, None, None]:
+
+def _yield_sse_text(
+    response: requests.Response, response_text_paths: list[str]
+) -> Generator[str, None, None]:
     for line in response.iter_lines(decode_unicode=True):
         if not line or not line.strip():
             continue
@@ -267,7 +281,7 @@ def _yield_sse_text(response: requests.Response, response_text_paths: list[str])
             continue
 
         # Extract everything after "data:"
-        payload = stripped[len("data:"):].strip()
+        payload = stripped[len("data:") :].strip()
         if payload.upper() == "[DONE]" or not payload:
             break
 
@@ -293,14 +307,19 @@ def _yield_sse_text(response: requests.Response, response_text_paths: list[str])
         if payload and payload != "[DONE]":
             yield payload
 
-def _consume_chunks(response: requests.Response, response_text_paths: list[str]) -> tuple[str, str | None]:
+
+def _consume_chunks(
+    response: requests.Response, response_text_paths: list[str]
+) -> tuple[str, str | None]:
     pieces: list[str] = []
     for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
         if not chunk:
             continue
         pieces.append(chunk)
     raw = "".join(pieces)
-    text = _extract_text(raw, response.headers.get("content-type", ""), response_text_paths=response_text_paths)
+    text = _extract_text(
+        raw, response.headers.get("content-type", ""), response_text_paths=response_text_paths
+    )
     return text, truncate(raw)
 
 
@@ -337,7 +356,11 @@ def _extract_google_candidate_text(parsed: Any) -> str:
 def _extract_text(raw_text: str, content_type: str, response_text_paths: list[str]) -> str:
     lower_ct = (content_type or "").lower()
 
-    if "application/json" in lower_ct or raw_text.strip().startswith("{") or raw_text.strip().startswith("["):
+    if (
+        "application/json" in lower_ct
+        or raw_text.strip().startswith("{")
+        or raw_text.strip().startswith("[")
+    ):
         parsed = parse_json_safe(raw_text)
         if parsed is not None:
             for path in response_text_paths:

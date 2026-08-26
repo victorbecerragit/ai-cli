@@ -26,7 +26,9 @@ class TuiController:
 
     def load_profiles(self) -> tuple[list[Profile], str | None]:
         profiles = load_profiles()
-        ordered_profiles = [profile_from_dict(name, profiles[name]) for name in sorted(profiles.keys())]
+        ordered_profiles = [
+            profile_from_dict(name, profiles[name]) for name in sorted(profiles.keys())
+        ]
 
         if not ordered_profiles:
             self.active_profile_name = None

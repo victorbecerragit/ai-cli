@@ -32,7 +32,9 @@ class ProfilesPane(Vertical):
             subtitle = f"{profile.method} {profile.endpoint}"
             list_widget.append(ListItem(Static(f"{profile.name}\n{subtitle}")))
 
-        name_to_select = selected_name if selected_name in self.profile_names else self.profile_names[0]
+        name_to_select = (
+            selected_name if selected_name in self.profile_names else self.profile_names[0]
+        )
         list_widget.index = self.profile_names.index(name_to_select)
         return name_to_select
 

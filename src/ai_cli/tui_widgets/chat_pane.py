@@ -38,7 +38,9 @@ class ChatPane(Vertical):
             log.write(Panel(text, title="assistant", border_style="green"))
 
     def append_system(self, text: str) -> None:
-        self.query_one("#chat-log", RichLog).write(Panel(text, title="system", border_style="yellow"))
+        self.query_one("#chat-log", RichLog).write(
+            Panel(text, title="system", border_style="yellow")
+        )
 
     def append_error(self, text: str) -> None:
         self.query_one("#chat-log", RichLog).write(Panel(text, title="error", border_style="red"))

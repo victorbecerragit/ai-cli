@@ -19,8 +19,8 @@ from .profile_manager import (
     load_profiles,
     parse_payload_template,
     profile_from_dict,
-    update_profile,
     profile_to_storage,
+    update_profile,
     validate_profile,
 )
 from .utils import parse_cookie_pairs, parse_header_pairs
@@ -47,19 +47,22 @@ def cmd_serve_copilot(
     host: str = typer.Option("127.0.0.1", help="Host to bind the server to"),
     port: int = typer.Option(8000, help="Port to bind the server to"),
     reload: bool = typer.Option(False, "--reload", help="Enable auto-reload for development"),
-    api_key: Optional[str] = typer.Option(None, "--api-key", help="API Key required to access this bridge"),
+    api_key: Optional[str] = typer.Option(
+        None, "--api-key", help="API Key required to access this bridge"
+    ),
 ) -> None:
     """
     Start the GitHub Copilot extension bridge server.
     """
     try:
         import uvicorn
+
         from .copilot_extension import app as fastapi_app
     except ImportError:
         console.print(
             "[bold red]Error:[/bold red] Missing dependencies for the Copilot server.\n"
             "Please install with the [bold cyan]serve[/bold cyan] extra:\n\n"
-            "  [yellow]uv tool install \".[serve]\" --force[/yellow]"
+            '  [yellow]uv tool install ".[serve]" --force[/yellow]'
         )
         raise typer.Exit(code=1)
 
@@ -67,7 +70,10 @@ def cmd_serve_copilot(
         os.environ["AI_CLI_API_KEY"] = api_key
 
     console.print(
-        Panel(f"Starting Copilot Extension server on [bold cyan]http://{host}:{port}[/bold cyan]", title="Copilot Bridge")
+        Panel(
+            f"Starting Copilot Extension server on [bold cyan]http://{host}:{port}[/bold cyan]",
+            title="Copilot Bridge",
+        )
     )
     if reload:
         uvicorn.run("ai_cli.copilot_extension:app", host=host, port=port, reload=True)
@@ -144,7 +150,9 @@ def cmd_probe(
 ) -> None:
     from .browser_probe import probe_url
 
-    payload = probe_url(url=url, timeout_seconds=timeout, headless=headless, contains=contains, output=output)
+    payload = probe_url(
+        url=url, timeout_seconds=timeout, headless=headless, contains=contains, output=output
+    )
 
     endpoints = payload.get("likely_endpoints", [])
     table = Table(title="Likely AI Endpoints")
@@ -251,7 +259,9 @@ def cmd_bootstrap_chat(
     url: str,
     endpoint: str = typer.Option("/completion", help="Endpoint path"),
     profile: Optional[str] = typer.Option(None, help="Use this profile name if saved"),
-    save_profile_name: Optional[str] = typer.Option(None, "--save-profile", help="Save bootstrap profile under this name"),
+    save_profile_name: Optional[str] = typer.Option(
+        None, "--save-profile", help="Save bootstrap profile under this name"
+    ),
     timeout: int = typer.Option(60, help="Request timeout seconds"),
     headless: bool = typer.Option(False, help="Run browser headless"),
 ) -> None:
@@ -264,7 +274,8 @@ def cmd_bootstrap_chat(
     auto_headers = {
         k: v
         for k, v in session.get("headers", {}).items()
-        if k.lower() in {"origin", "referer", "user-agent", "authorization", "content-type", "accept"}
+        if k.lower()
+        in {"origin", "referer", "user-agent", "authorization", "content-type", "accept"}
     }
 
     resolved = _merge_profile_with_overrides(
@@ -322,7 +333,13 @@ def cmd_bootstrap_chat(
             console.print(f"Saved profile: {save_profile_name}")
 
     client = ApiClient(resolved)
-    console.print(Panel("Bootstrap complete. Starting interactive chat.", title="bootstrap-chat", border_style="cyan"))
+    console.print(
+        Panel(
+            "Bootstrap complete. Starting interactive chat.",
+            title="bootstrap-chat",
+            border_style="cyan",
+        )
+    )
     run_chat(client, resolved, debug=False)
 
 
@@ -347,7 +364,14 @@ def profiles_list() -> None:
         display_base_url = spec.base_url if spec else profile.base_url
         display_endpoint = spec.endpoint if spec else profile.endpoint
         model_label = profile.model or ""
-        table.add_row(name, display_base_url, display_endpoint, profile.method, str(profile.timeout), model_label)
+        table.add_row(
+            name,
+            display_base_url,
+            display_endpoint,
+            profile.method,
+            str(profile.timeout),
+            model_label,
+        )
 
     console.print(table)
 
@@ -357,7 +381,18 @@ def profiles_show(name: str) -> None:
     profile = get_profile(name)
     if not profile:
         raise typer.BadParameter(f"Profile '{name}' not found")
-    console.print(Panel(json.dumps({"name": profile.name, **{k: v for k, v in profile.__dict__.items() if k != 'name'}}, indent=2), title=f"profile: {name}"))
+    console.print(
+        Panel(
+            json.dumps(
+                {
+                    "name": profile.name,
+                    **{k: v for k, v in profile.__dict__.items() if k != "name"},
+                },
+                indent=2,
+            ),
+            title=f"profile: {name}",
+        )
+    )
 
 
 @profiles_app.command("add")
@@ -380,7 +415,9 @@ def profiles_add(
     from .provider_registry import resolve_model_alias as _resolve
 
     if not overwrite and get_profile(name):
-        console.print(f"[bold red]Error:[/bold red] Profile '{name}' already exists. Use [yellow]--overwrite[/yellow] to replace it or [yellow]profiles update[/yellow] to modify it.")
+        console.print(
+            f"[bold red]Error:[/bold red] Profile '{name}' already exists. Use [yellow]--overwrite[/yellow] to replace it or [yellow]profiles update[/yellow] to modify it."
+        )
         raise typer.Exit(code=1)
 
     is_registered = _resolve(model or name) is not None
@@ -407,7 +444,8 @@ def profiles_add(
         headers=parsed_headers,
         cookies=parsed_cookies,
         prompt_field_candidates=prompt_field or ["messages", "prompt", "message", "input", "query"],
-        response_text_paths=response_path or ["answer", "response", "content", "choices.0.message.content"],
+        response_text_paths=response_path
+        or ["answer", "response", "content", "choices.0.message.content"],
         timeout=timeout,
         notes=notes,
         stream=stream,
@@ -454,7 +492,9 @@ def profiles_update(
 
 
 @profiles_app.command("delete")
-def profiles_delete(name: str, yes: bool = typer.Option(False, "--yes", help="Skip confirmation")) -> None:
+def profiles_delete(
+    name: str, yes: bool = typer.Option(False, "--yes", help="Skip confirmation")
+) -> None:
     if not yes:
         confirmed = typer.confirm(f"Delete profile '{name}'?")
         if not confirmed:
@@ -466,7 +506,9 @@ def profiles_delete(name: str, yes: bool = typer.Option(False, "--yes", help="Sk
 
 
 @profiles_app.command("validate")
-def profiles_validate(name: str, strict: bool = typer.Option(False, help="Enable strict warnings")) -> None:
+def profiles_validate(
+    name: str, strict: bool = typer.Option(False, help="Enable strict warnings")
+) -> None:
     profile = get_profile(name)
     if not profile:
         raise typer.BadParameter(f"Profile '{name}' not found")

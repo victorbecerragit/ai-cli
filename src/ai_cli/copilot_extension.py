@@ -4,18 +4,23 @@ import asyncio
 import json
 import logging
 import os
-import uvicorn
 import time
-from fastapi import FastAPI, Request, HTTPException, Depends
+
+import uvicorn
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
+
 from .api_client import ApiClient
 from .profile_manager import get_profile
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger("copilot-bridge")
 
 app = FastAPI(title="ai-cli Copilot Extension")
+
 
 async def verify_auth(request: Request):
     """
@@ -35,16 +40,22 @@ async def verify_auth(request: Request):
         logger.warning("Unauthorized access attempt: Invalid API Key")
         raise HTTPException(status_code=401, detail="Invalid API Key")
 
+
 @app.get("/health")
-async def health_check(request: Request): # request is unused but kept for consistency with other endpoints
+async def health_check(
+    request: Request,
+):  # request is unused but kept for consistency with other endpoints
     """Verify server status and profile availability."""
     from .profile_manager import load_profiles
+
     return {"status": "ok", "profiles_count": len(load_profiles())}
+
 
 @app.get("/v1/models", dependencies=[Depends(verify_auth)])
 async def list_models(request: Request):
     """Allow clients to discover local profiles as models."""
     from .profile_manager import load_profiles
+
     profiles = load_profiles()
     return {
         "object": "list",
@@ -52,12 +63,13 @@ async def list_models(request: Request):
             {
                 "id": name,
                 "object": "model",
-                "created": int(time.time()), # Dynamic timestamp
-                "owned_by": "ai-cli"
+                "created": int(time.time()),  # Dynamic timestamp
+                "owned_by": "ai-cli",
             }
             for name in profiles.keys()
-        ]
+        ],
     }
+
 
 @app.post("/v1/chat/completions", dependencies=[Depends(verify_auth)])
 async def chat_handler(request: Request):
@@ -71,7 +83,7 @@ async def chat_handler(request: Request):
         raise HTTPException(status_code=400, detail="Invalid JSON payload")
 
     messages = data.get("messages", [])
-    
+
     if not messages:
         logger.warning("Received request with no messages")
         raise HTTPException(status_code=400, detail="No messages provided")
@@ -81,14 +93,14 @@ async def chat_handler(request: Request):
     # The last message is the current prompt
     last_msg = messages[-1]
     prompt = last_msg.get("content", "")
-    
+
     # History format: ApiClient expects everything before the current prompt
     history = messages[:-1] if len(messages) > 1 else []
 
     # 2. Pick a profile. Default to google-gemma4, but allow override via header.
     profile_name = request.headers.get("X-AI-CLI-Profile", "google-gemma4")
     profile = get_profile(profile_name)
-    
+
     logger.info(f"Request: {profile_name} | Prompt: {prompt[:50]}... | Stream: {stream_requested}")
 
     if not profile:
@@ -98,14 +110,15 @@ async def chat_handler(request: Request):
     client = ApiClient(profile)
 
     if stream_requested:
+
         async def stream_generator():
             logger.info(f"Starting stream for profile: {profile_name}")
             # 1. Send an initial chunk indicating the role
             yield f"data: {json.dumps({'choices': [{'delta': {'role': 'assistant'}, 'index': 0}]})}\n\n"
-            
+
             # Create the blocking generator
             gen = client.ask_stream(prompt, history=history)
-            
+
             while True:
                 try:
                     # Offload the blocking next() call to a thread to keep the event loop free
@@ -113,9 +126,7 @@ async def chat_handler(request: Request):
                     if chunk is None:
                         break
 
-                    payload = {
-                        "choices": [{"delta": {"content": chunk}, "index": 0}]
-                    }
+                    payload = {"choices": [{"delta": {"content": chunk}, "index": 0}]}
                     yield f"data: {json.dumps(payload)}\n\n"
                 except Exception as e:
                     logger.error(f"Stream error: {e}")
@@ -124,11 +135,9 @@ async def chat_handler(request: Request):
                     }
                     yield f"data: {json.dumps(error_payload)}\n\n"
                     break
-            
+
             # 2. Send final finish_reason for strict clients
-            final_payload = {
-                "choices": [{"delta": {}, "finish_reason": "stop", "index": 0}]
-            }
+            final_payload = {"choices": [{"delta": {}, "finish_reason": "stop", "index": 0}]}
             yield f"data: {json.dumps(final_payload)}\n\n"
             yield "data: [DONE]\n\n"
             logger.info(f"Stream finished for profile: {profile_name}")
@@ -144,16 +153,8 @@ async def chat_handler(request: Request):
         raise HTTPException(status_code=500, detail=f"Model request failed: {str(e)}")
 
     # 4. Return the response in the format Copilot/OpenAI expects
-    return {
-        "choices": [
-            {
-                "message": {
-                    "role": "assistant",
-                    "content": result.text
-                }
-            }
-        ]
-    }
+    return {"choices": [{"message": {"role": "assistant", "content": result.text}}]}
+
 
 if __name__ == "__main__":
     # Run with: uv run python -m ai_cli.copilot_extension

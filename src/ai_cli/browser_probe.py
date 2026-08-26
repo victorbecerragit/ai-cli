@@ -96,7 +96,9 @@ def probe_url(
     return payload
 
 
-def bootstrap_session(url: str, endpoint_hint: str | None = None, headless: bool = False) -> dict[str, Any]:
+def bootstrap_session(
+    url: str, endpoint_hint: str | None = None, headless: bool = False
+) -> dict[str, Any]:
     from playwright.sync_api import sync_playwright  # noqa: PLC0415
 
     with sync_playwright() as pw:
@@ -129,7 +131,10 @@ def bootstrap_session(url: str, endpoint_hint: str | None = None, headless: bool
     selected_headers: dict[str, str] = {}
     if endpoint_hint:
         for req in seen_requests:
-            if endpoint_hint.lower() in (req.get("path") or "").lower() or endpoint_hint.lower() in (req.get("url") or "").lower():
+            if (
+                endpoint_hint.lower() in (req.get("path") or "").lower()
+                or endpoint_hint.lower() in (req.get("url") or "").lower()
+            ):
                 selected_headers = req.get("headers", {})
                 break
 
@@ -207,7 +212,9 @@ def _capture(
         events.append(open_event)
 
         def on_sent(payload: bytes | str) -> None:
-            normalized_payload = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else payload
+            normalized_payload = (
+                payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else payload
+            )
             events.append(
                 ProbeEvent(
                     kind="ws_send",
@@ -221,7 +228,9 @@ def _capture(
             )
 
         def on_recv(payload: bytes | str) -> None:
-            normalized_payload = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else payload
+            normalized_payload = (
+                payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else payload
+            )
             events.append(
                 ProbeEvent(
                     kind="ws_recv",

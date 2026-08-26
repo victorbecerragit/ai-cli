@@ -20,6 +20,7 @@ runner = CliRunner()
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _add(name: str, base_url: str = "https://example.com") -> None:
     """Invoke `profiles add` with required args, assert success."""
     result = runner.invoke(app, ["profiles", "add", name, "--base-url", base_url])
@@ -29,6 +30,7 @@ def _add(name: str, base_url: str = "https://example.com") -> None:
 # ---------------------------------------------------------------------------
 # `profiles add`
 # ---------------------------------------------------------------------------
+
 
 def test_profiles_add_creates_profile() -> None:
     with runner.isolated_filesystem():
@@ -88,6 +90,7 @@ def test_profiles_add_custom_options() -> None:
 # `profiles show`
 # ---------------------------------------------------------------------------
 
+
 def test_profiles_show_existing() -> None:
     with runner.isolated_filesystem():
         _add("visible")
@@ -105,6 +108,7 @@ def test_profiles_show_missing_profile_exits_nonzero() -> None:
 # ---------------------------------------------------------------------------
 # `profiles update`
 # ---------------------------------------------------------------------------
+
 
 def test_profiles_update_changes_timeout() -> None:
     with runner.isolated_filesystem():
@@ -146,6 +150,7 @@ def test_profiles_update_changes_notes() -> None:
 # `profiles delete`
 # ---------------------------------------------------------------------------
 
+
 def test_profiles_delete_removes_profile() -> None:
     with runner.isolated_filesystem():
         _add("todelete")
@@ -180,6 +185,7 @@ def test_profiles_delete_cancel_via_no_confirmation() -> None:
 # ---------------------------------------------------------------------------
 # `profiles validate`
 # ---------------------------------------------------------------------------
+
 
 def test_profiles_validate_valid_profile_exits_zero() -> None:
     with runner.isolated_filesystem():

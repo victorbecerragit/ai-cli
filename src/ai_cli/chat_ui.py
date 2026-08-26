@@ -21,7 +21,12 @@ def run_chat(
     transcript: list[dict[str, str]] = []
     debug_enabled = debug
 
-    console.print(Panel.fit("Interactive chat started. Commands: /exit /quit /clear /debug /save <file>", title="mini-DevTools"))
+    console.print(
+        Panel.fit(
+            "Interactive chat started. Commands: /exit /quit /clear /debug /save <file>",
+            title="mini-DevTools",
+        )
+    )
 
     while True:
         try:

@@ -37,8 +37,12 @@ def _google_generate_content_spec(alias: str, model_id: str) -> ProviderSpec:
 
 _PROVIDER_ALIASES: dict[str, ProviderSpec] = {
     "google/gemma4": _google_generate_content_spec("google/gemma4", "gemma-4-26b-a4b-it"),
-    "google/gemma-4-26b-a4b-it": _google_generate_content_spec("google/gemma-4-26b-a4b-it", "gemma-4-26b-a4b-it"),
-    "google/gemma-4-31b-it": _google_generate_content_spec("google/gemma-4-31b-it", "gemma-4-31b-it"),
+    "google/gemma-4-26b-a4b-it": _google_generate_content_spec(
+        "google/gemma-4-26b-a4b-it", "gemma-4-26b-a4b-it"
+    ),
+    "google/gemma-4-31b-it": _google_generate_content_spec(
+        "google/gemma-4-31b-it", "gemma-4-31b-it"
+    ),
 }
 
 

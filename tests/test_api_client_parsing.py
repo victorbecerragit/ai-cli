@@ -17,20 +17,17 @@ from ai_cli.api_client import (
 # _extract_text – JSON paths
 # ---------------------------------------------------------------------------
 
+
 class TestExtractTextJson:
     """_extract_text resolves dotted paths into JSON responses."""
 
     def test_openai_choices_message_content(self) -> None:
-        payload = json.dumps(
-            {"choices": [{"message": {"content": "Hello from OpenAI!"}}]}
-        )
+        payload = json.dumps({"choices": [{"message": {"content": "Hello from OpenAI!"}}]})
         result = _extract_text(payload, "application/json", [])
         assert result == "Hello from OpenAI!"
 
     def test_openai_delta_content(self) -> None:
-        payload = json.dumps(
-            {"choices": [{"delta": {"content": "streaming chunk"}}]}
-        )
+        payload = json.dumps({"choices": [{"delta": {"content": "streaming chunk"}}]})
         result = _extract_text(payload, "application/json", [])
         assert result == "streaming chunk"
 
@@ -81,6 +78,7 @@ class TestExtractTextJson:
 # _extract_text – SSE content-type
 # ---------------------------------------------------------------------------
 
+
 class TestExtractTextSse:
     """_extract_text handles text/event-stream (non-streaming fallback path)."""
 
@@ -90,11 +88,7 @@ class TestExtractTextSse:
         assert result == "helloworld"
 
     def test_sse_json_events_extract_content(self) -> None:
-        raw = (
-            'data: {"content": "Hi "}\n'
-            'data: {"content": "there"}\n'
-            "data: [DONE]\n"
-        )
+        raw = 'data: {"content": "Hi "}\ndata: {"content": "there"}\ndata: [DONE]\n'
         result = _extract_text(raw, "text/event-stream", [])
         assert result == "Hi there"
 
@@ -113,6 +107,7 @@ class TestExtractTextSse:
 # _extract_text – plain text
 # ---------------------------------------------------------------------------
 
+
 class TestExtractTextPlain:
     def test_plain_text_returned_as_is(self) -> None:
         result = _extract_text("just some text", "text/plain", [])
@@ -130,6 +125,7 @@ class TestExtractTextPlain:
 # ---------------------------------------------------------------------------
 # _consume_sse – live streaming via mocked Response
 # ---------------------------------------------------------------------------
+
 
 class TestConsumeSse:
     """_consume_sse iterates over a mocked requests.Response."""
@@ -157,24 +153,18 @@ class TestConsumeSse:
         assert text == "Hello world"
 
     def test_done_stops_iteration(self) -> None:
-        response = self._make_response(
-            ["data: before", "data: [DONE]", "data: after"]
-        )
+        response = self._make_response(["data: before", "data: [DONE]", "data: after"])
         text, _ = _consume_sse(response)
         assert "before" in text
         assert "after" not in text
 
     def test_empty_lines_are_skipped(self) -> None:
-        response = self._make_response(
-            ["", "data: content", "", "data: [DONE]"]
-        )
+        response = self._make_response(["", "data: content", "", "data: [DONE]"])
         text, _ = _consume_sse(response)
         assert text == "content"
 
     def test_non_data_lines_are_ignored(self) -> None:
-        response = self._make_response(
-            ["event: ping", ": comment", "data: real", "data: [DONE]"]
-        )
+        response = self._make_response(["event: ping", ": comment", "data: real", "data: [DONE]"])
         text, _ = _consume_sse(response)
         assert text == "real"
 
@@ -193,6 +183,7 @@ class TestConsumeSse:
 # ---------------------------------------------------------------------------
 # COMMON_JSON_TEXT_FIELDS sanity check
 # ---------------------------------------------------------------------------
+
 
 def test_common_json_fields_contains_expected_paths() -> None:
     """Ensure well-known field names are present for compatibility."""
