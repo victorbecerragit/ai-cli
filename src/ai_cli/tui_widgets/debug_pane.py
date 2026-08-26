@@ -16,7 +16,9 @@ class DebugPane(Vertical):
         yield Static(id="debug-content")
 
     def set_data(self, payload: dict[str, object]) -> None:
-        self.query_one("#debug-content", Static).update(json.dumps(payload, indent=2, ensure_ascii=True))
+        self.query_one("#debug-content", Static).update(
+            json.dumps(payload, indent=2, ensure_ascii=True)
+        )
 
     def set_visible(self, visible: bool) -> None:
         self.display = visible

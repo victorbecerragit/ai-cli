@@ -45,7 +45,9 @@ class AiCliTui(App[None]):
         self._load_profiles_ui()
         self._apply_debug_visibility()
 
-        self.query_one(ChatPane).append_system("Welcome to ai-cli TUI. Select a profile and start chatting.")
+        self.query_one(ChatPane).append_system(
+            "Welcome to ai-cli TUI. Select a profile and start chatting."
+        )
 
         self.query_one(ChatPane).focus_input()
 
@@ -57,7 +59,9 @@ class AiCliTui(App[None]):
             return
 
         if not self.controller.active_profile_name:
-            chat_pane.append_system("No active profile selected. Use the profiles list on the left.")
+            chat_pane.append_system(
+                "No active profile selected. Use the profiles list on the left."
+            )
             chat_pane.clear_input()
             return
 
@@ -75,8 +79,29 @@ class AiCliTui(App[None]):
         self._render_debug()
 
         try:
-            result = await asyncio.to_thread(self.controller.ask_sync, profile, prompt)
-            chat_pane.append_assistant(result.text)
+            if profile.stream:
+                # Real-time streaming
+                gen = self.controller.ask_stream(profile, prompt)
+                full_text = ""
+                chat_pane.append_assistant(
+                    ""
+                )  # Add empty assistant message to hold the streaming content
+
+                while True:
+                    chunk = await asyncio.to_thread(next, gen, None)
+                    if chunk is None:
+                        break
+                    full_text += chunk
+                    chat_pane.update_assistant(
+                        full_text
+                    )  # Update the last message with new content
+
+                self.controller.update_history(prompt, full_text)
+            else:
+                # Classic one-shot
+                result = await asyncio.to_thread(self.controller.ask_sync, profile, prompt)
+                chat_pane.append_assistant(result.text)
+
             self._render_debug()
         except Exception as exc:
             chat_pane.append_error(f"Request failed: {exc}")

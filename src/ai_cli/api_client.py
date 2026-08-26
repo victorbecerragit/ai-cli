@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Any
+from typing import Any, Generator
 from urllib.parse import urlencode
 
 import requests
@@ -42,9 +42,76 @@ class ApiClient:
         self.timeout_seconds = timeout_seconds or profile.timeout
         self.extra_headers = extra_headers or {}
 
-    def ask(self, prompt: str, history: list[dict[str, str]] | None = None, stream: bool | None = None) -> ApiResult:
+    def ask(
+        self, prompt: str, history: list[dict[str, str]] | None = None, stream: bool | None = None
+    ) -> ApiResult:
         history = history or []
+        method, url, payload, headers, response_text_paths, use_stream = self._prepare_request(
+            prompt, history, stream
+        )
 
+        started = time.monotonic()
+        response = requests.request(
+            method,
+            url,
+            json=payload,
+            headers=headers,
+            cookies=self.cookies,
+            timeout=self.timeout_seconds,
+            stream=use_stream,
+        )
+
+        content_type = response.headers.get("content-type", "")
+
+        if use_stream and "event-stream" in content_type.lower():
+            text, raw_preview = _consume_sse(response, response_text_paths)
+        elif use_stream and response.headers.get("transfer-encoding", "").lower() == "chunked":
+            text, raw_preview = _consume_chunks(response, response_text_paths)
+        else:
+            raw = response.text
+            text = _extract_text(raw, content_type, response_text_paths)
+            raw_preview = truncate(raw)
+
+        elapsed_ms = int((time.monotonic() - started) * 1000)
+        return ApiResult(
+            ok=response.ok,
+            status_code=response.status_code,
+            text=text,
+            elapsed_ms=elapsed_ms,
+            raw_preview=raw_preview,
+            content_type=content_type,
+        )
+
+    def ask_stream(
+        self, prompt: str, history: list[dict[str, str]] | None = None
+    ) -> Generator[str, None, None]:
+        history = history or []
+        method, url, payload, headers, response_text_paths, use_stream = self._prepare_request(
+            prompt, history, stream=True
+        )
+
+        response = requests.request(
+            method,
+            url,
+            json=payload,
+            headers=headers,
+            cookies=self.cookies,
+            timeout=self.timeout_seconds,
+            stream=use_stream,
+        )
+
+        content_type = response.headers.get("content-type", "").lower()
+        if use_stream and "event-stream" in content_type:
+            yield from _yield_sse_text(response, response_text_paths)
+        elif use_stream and response.headers.get("transfer-encoding", "").lower() == "chunked":
+            yield from response.iter_content(chunk_size=None, decode_unicode=True)
+        else:
+            raw = response.text
+            yield _extract_text(raw, content_type, response_text_paths)
+
+    def _prepare_request(
+        self, prompt: str, history: list[dict[str, str]], stream: bool | None = None
+    ) -> tuple[str, str, dict[str, Any], dict[str, str], list[str], bool]:
         selected_model = self.model_override or self.profile.model or self.profile.name
         provider_spec = resolve_model_alias(selected_model)
 
@@ -72,43 +139,17 @@ class ApiClient:
                 if api_key:
                     url = f"{url}?{urlencode({provider_spec.auth_query_param: api_key})}"
 
-        # google-generate-content is a REST endpoint, not SSE — disable streaming
         if provider_spec and provider_spec.payload_style == "google-generate-content":
-            use_stream = False
+            # Google requires a different action suffix and alt=sse for streaming
+            use_stream = self.profile.stream if stream is None else stream
+            if use_stream:
+                url = url.replace(":generateContent", ":streamGenerateContent")
+                separator = "&" if "?" in url else "?"
+                url = f"{url}{separator}alt=sse"
         else:
             use_stream = self.profile.stream if stream is None else stream
 
-        started = time.monotonic()
-        response = requests.request(
-            method,
-            url,
-            json=payload,
-            headers=headers,
-            cookies=self.cookies,
-            timeout=self.timeout_seconds,
-            stream=use_stream,
-        )
-
-        content_type = response.headers.get("content-type", "")
-
-        if use_stream and "event-stream" in content_type.lower():
-            text, raw_preview = _consume_sse(response)
-        elif use_stream and response.headers.get("transfer-encoding", "").lower() == "chunked":
-            text, raw_preview = _consume_chunks(response)
-        else:
-            raw = response.text
-            text = _extract_text(raw, content_type, response_text_paths)
-            raw_preview = truncate(raw)
-
-        elapsed_ms = int((time.monotonic() - started) * 1000)
-        return ApiResult(
-            ok=response.ok,
-            status_code=response.status_code,
-            text=text,
-            elapsed_ms=elapsed_ms,
-            raw_preview=raw_preview,
-            content_type=content_type,
-        )
+        return method, url, payload, headers, response_text_paths, use_stream
 
     def _build_payload(self, prompt: str, history: list[dict[str, str]]) -> dict[str, Any]:
         messages = [*history, {"role": "user", "content": prompt}]
@@ -157,7 +198,9 @@ class ApiClient:
 
         return self._build_payload(prompt, history)
 
-    def _inject_provider_auth(self, headers: dict[str, str], provider_spec: ProviderSpec) -> dict[str, str]:
+    def _inject_provider_auth(
+        self, headers: dict[str, str], provider_spec: ProviderSpec
+    ) -> dict[str, str]:
         if not provider_spec.auth_env:
             return headers
 
@@ -173,49 +216,110 @@ class ApiClient:
         return headers
 
 
-def _consume_sse(response: requests.Response) -> tuple[str, str | None]:
+def _consume_sse(
+    response: requests.Response, response_text_paths: list[str]
+) -> tuple[str, str | None]:
     chunks: list[str] = []
     raw_lines: list[str] = []
 
     for line in response.iter_lines(decode_unicode=True):
-        if not line:
+        if not line or not line.strip():
             continue
         raw_lines.append(line)
 
-        if not line.startswith("data:"):
+        stripped = line.strip().lower()
+        if not stripped.startswith("data:"):
             continue
 
-        payload = line[5:].strip()
-        if payload == "[DONE]":
+        # Extract everything after "data:"
+        payload = line.strip()[len("data:") :].strip()
+        # Google sometimes ends with a line that isn't exactly [DONE] but empty
+        if payload.upper() == "[DONE]" or not payload:
             break
 
         parsed = parse_json_safe(payload)
         if isinstance(parsed, dict):
+            # Try profile-specific paths first
+            found = False
+            for path in response_text_paths:
+                val = get_by_dotted_path(parsed, path)
+                if isinstance(val, str):
+                    if val.upper() != "[DONE]":
+                        chunks.append(val)
+                    found = True
+                    break
+
+            if found:
+                continue
+
             google_text = _extract_google_candidate_text(parsed)
             if google_text:
-                chunks.append(google_text)
+                if google_text.upper() != "[DONE]":
+                    chunks.append(google_text)
                 continue
 
-            content = parsed.get("content")
-            if isinstance(content, str):
-                chunks.append(content)
-                continue
-
-        chunks.append(payload)
+        # Only append raw payload if it's not the terminal [DONE] signal
+        if payload and payload != "[DONE]":
+            chunks.append(payload)
 
     combined = "".join(chunks).strip()
+    if combined.endswith("[DONE]"):
+        combined = combined[:-6].strip()
     raw_preview = truncate("\n".join(raw_lines))
     return (combined or "<empty response>"), raw_preview
 
 
-def _consume_chunks(response: requests.Response) -> tuple[str, str | None]:
+def _yield_sse_text(
+    response: requests.Response, response_text_paths: list[str]
+) -> Generator[str, None, None]:
+    for line in response.iter_lines(decode_unicode=True):
+        if not line or not line.strip():
+            continue
+
+        stripped = line.strip()
+        if not stripped.lower().startswith("data:"):
+            continue
+
+        # Extract everything after "data:"
+        payload = stripped[len("data:") :].strip()
+        if payload.upper() == "[DONE]" or not payload:
+            break
+
+        parsed = parse_json_safe(payload)
+        if isinstance(parsed, dict):
+            found = False
+            for path in response_text_paths:
+                val = get_by_dotted_path(parsed, path)
+                if isinstance(val, str):
+                    if val.upper() != "[DONE]":
+                        yield val
+                    found = True
+                    break
+            if found:
+                continue
+
+            google_text = _extract_google_candidate_text(parsed)
+            if google_text:
+                if google_text.upper() != "[DONE]":
+                    yield google_text
+                continue
+
+        if payload and payload != "[DONE]":
+            yield payload
+
+
+def _consume_chunks(
+    response: requests.Response, response_text_paths: list[str]
+) -> tuple[str, str | None]:
     pieces: list[str] = []
     for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
         if not chunk:
             continue
         pieces.append(chunk)
     raw = "".join(pieces)
-    text = _extract_text(raw, response.headers.get("content-type", ""), response_text_paths=[])
+    text = _extract_text(
+        raw, response.headers.get("content-type", ""), response_text_paths=response_text_paths
+    )
     return text, truncate(raw)
 
 
@@ -252,7 +356,11 @@ def _extract_google_candidate_text(parsed: Any) -> str:
 def _extract_text(raw_text: str, content_type: str, response_text_paths: list[str]) -> str:
     lower_ct = (content_type or "").lower()
 
-    if "application/json" in lower_ct or raw_text.strip().startswith("{") or raw_text.strip().startswith("["):
+    if (
+        "application/json" in lower_ct
+        or raw_text.strip().startswith("{")
+        or raw_text.strip().startswith("[")
+    ):
         parsed = parse_json_safe(raw_text)
         if parsed is not None:
             for path in response_text_paths:

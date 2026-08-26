@@ -75,7 +75,9 @@ def profile_from_dict(name: str, raw: dict[str, Any]) -> Profile:
         payload_template=raw.get("payload_template", {"prompt": "{{prompt}}"}),
         headers=raw.get("headers", {}) or {},
         cookies=raw.get("cookies", {}) or {},
-        prompt_field_candidates=raw.get("prompt_field_candidates", ["prompt", "message", "input", "query", "messages"]),
+        prompt_field_candidates=raw.get(
+            "prompt_field_candidates", ["prompt", "message", "input", "query", "messages"]
+        ),
         response_text_paths=raw.get("response_text_paths", []) or [],
         timeout=int(raw.get("timeout", 60)),
         notes=raw.get("notes"),
@@ -119,9 +121,7 @@ def validate_profile(profile: Profile, strict: bool = False) -> tuple[list[str],
             errors.append("endpoint must start with '/' or be an absolute URL")
 
     if profile.method.upper() not in SUPPORTED_METHODS:
-        errors.append(
-            f"method must be one of {', '.join(sorted(SUPPORTED_METHODS))}"
-        )
+        errors.append(f"method must be one of {', '.join(sorted(SUPPORTED_METHODS))}")
 
     if not isinstance(profile.headers, dict):
         errors.append("headers must be a dictionary")
