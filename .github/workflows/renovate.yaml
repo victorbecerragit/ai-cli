@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: '0 4 * * 1'
   workflow_dispatch:
+    inputs:
+      baseBranches:
+        description: 'Target branch to scan (e.g., feature/copilot-bridge-streaming)'
+        required: false
+        default: 'main'
+        type: string
 
 jobs:
   renovate:
@@ -18,3 +24,5 @@ jobs:
         env:
           LOG_LEVEL: 'info'
           RENOVATE_REPOSITORIES: ${{ github.repository }}
+          RENOVATE_BASE_BRANCHES: ${{ inputs.baseBranches || 'main' }}
+
