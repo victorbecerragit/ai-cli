@@ -1,0 +1,38 @@
+name: PR Autofix
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Use RENOVATE_TOKEN to ensure subsequent workflows (like CI) trigger
+          # on the new commit. Falls back to GITHUB_TOKEN if not available.
+          token: ${{ secrets.RENOVATE_TOKEN || secrets.GITHUB_TOKEN }}
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Update uv lockfile (dependency sync)
+        run: uv lock
+
+      - name: Run Ruff format
+        run: uv run ruff format src tests
+
+      - name: Run Ruff check --fix
+        run: uv run ruff check --fix src tests || true
+
+      - name: Commit and push autofixes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: PR autofix remediations (format & uv.lock)"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "github-actions[bot]@users.noreply.github.com"
