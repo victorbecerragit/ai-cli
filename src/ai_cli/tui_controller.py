@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Generator
 
 from .api_client import ApiClient
 from .models import ApiResult, Profile
@@ -100,6 +101,16 @@ class TuiController:
             "response_preview": result.raw_preview,
         }
         return result
+
+    def ask_stream(self, profile: Profile, prompt: str) -> Generator[str, None, None]:
+        client = ApiClient(profile)
+        return client.ask_stream(prompt, history=self.history)
+
+    def update_history(self, prompt: str, assistant_response: str) -> None:
+        self.history.append({"role": "user", "content": prompt})
+        self.history.append({"role": "assistant", "content": assistant_response})
+        self.transcript.append({"role": "user", "content": prompt})
+        self.transcript.append({"role": "assistant", "content": assistant_response})
 
     def mark_exception(self, profile: Profile, error: Exception) -> None:
         self.last_debug = {

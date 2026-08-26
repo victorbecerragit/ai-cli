@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from typing import Any, Optional
 
 import typer
@@ -19,6 +20,7 @@ from .profile_manager import (
     parse_payload_template,
     profile_from_dict,
     update_profile,
+    profile_to_storage,
     validate_profile,
 )
 from .utils import parse_cookie_pairs, parse_header_pairs
@@ -38,6 +40,39 @@ def cmd_tui(
     from .tui_app import AiCliTui
 
     AiCliTui(start_profile=profile, debug_visible=debug).run()
+
+
+@app.command("serve-copilot")
+def cmd_serve_copilot(
+    host: str = typer.Option("127.0.0.1", help="Host to bind the server to"),
+    port: int = typer.Option(8000, help="Port to bind the server to"),
+    reload: bool = typer.Option(False, "--reload", help="Enable auto-reload for development"),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="API Key required to access this bridge"),
+) -> None:
+    """
+    Start the GitHub Copilot extension bridge server.
+    """
+    try:
+        import uvicorn
+        from .copilot_extension import app as fastapi_app
+    except ImportError:
+        console.print(
+            "[bold red]Error:[/bold red] Missing dependencies for the Copilot server.\n"
+            "Please install with the [bold cyan]serve[/bold cyan] extra:\n\n"
+            "  [yellow]uv tool install \".[serve]\" --force[/yellow]"
+        )
+        raise typer.Exit(code=1)
+
+    if api_key:
+        os.environ["AI_CLI_API_KEY"] = api_key
+
+    console.print(
+        Panel(f"Starting Copilot Extension server on [bold cyan]http://{host}:{port}[/bold cyan]", title="Copilot Bridge")
+    )
+    if reload:
+        uvicorn.run("ai_cli.copilot_extension:app", host=host, port=port, reload=True)
+    else:
+        uvicorn.run(fastapi_app, host=host, port=port)
 
 
 def _merge_profile_with_overrides(
@@ -340,8 +375,14 @@ def profiles_add(
     notes: Optional[str] = typer.Option(None, help="Optional notes"),
     stream: bool = typer.Option(True, help="Enable streaming support"),
     model: Optional[str] = typer.Option(None, help="Model alias (e.g. google/gemma4)"),
+    overwrite: bool = typer.Option(False, "--overwrite", "-f", help="Overwrite existing profile"),
 ) -> None:
     from .provider_registry import resolve_model_alias as _resolve
+
+    if not overwrite and get_profile(name):
+        console.print(f"[bold red]Error:[/bold red] Profile '{name}' already exists. Use [yellow]--overwrite[/yellow] to replace it or [yellow]profiles update[/yellow] to modify it.")
+        raise typer.Exit(code=1)
+
     is_registered = _resolve(model or name) is not None
     actual_base_url = base_url or ("" if is_registered else typer.prompt("Base URL"))
     parsed_headers = parse_header_pairs(header)
@@ -378,8 +419,12 @@ def profiles_add(
     if errors:
         raise typer.Exit(code=1)
 
-    add_profile(profile)
-    console.print(f"Added profile: {name}")
+    if overwrite and get_profile(name):
+        update_profile(name, profile_to_storage(profile))
+        console.print(f"Updated profile: {name}")
+    else:
+        add_profile(profile)
+        console.print(f"Added profile: {name}")
 
 
 @profiles_app.command("update")
