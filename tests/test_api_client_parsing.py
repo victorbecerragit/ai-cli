@@ -137,7 +137,7 @@ class TestConsumeSse:
 
     def test_plain_data_chunks_joined(self) -> None:
         response = self._make_response(["data: foo", "data: bar", "data: [DONE]"])
-        text, raw = _consume_sse(response)
+        text, raw = _consume_sse(response, ["content"])
         assert text == "foobar"
         assert raw is not None
 
@@ -149,33 +149,33 @@ class TestConsumeSse:
                 "data: [DONE]",
             ]
         )
-        text, _ = _consume_sse(response)
+        text, _ = _consume_sse(response, ["content"])
         assert text == "Hello world"
 
     def test_done_stops_iteration(self) -> None:
         response = self._make_response(["data: before", "data: [DONE]", "data: after"])
-        text, _ = _consume_sse(response)
+        text, _ = _consume_sse(response, ["content"])
         assert "before" in text
         assert "after" not in text
 
     def test_empty_lines_are_skipped(self) -> None:
         response = self._make_response(["", "data: content", "", "data: [DONE]"])
-        text, _ = _consume_sse(response)
+        text, _ = _consume_sse(response, ["content"])
         assert text == "content"
 
     def test_non_data_lines_are_ignored(self) -> None:
         response = self._make_response(["event: ping", ": comment", "data: real", "data: [DONE]"])
-        text, _ = _consume_sse(response)
+        text, _ = _consume_sse(response, ["content"])
         assert text == "real"
 
     def test_empty_stream_returns_placeholder(self) -> None:
         response = self._make_response(["data: [DONE]"])
-        text, _ = _consume_sse(response)
+        text, _ = _consume_sse(response, ["content"])
         assert text == "<empty response>"
 
     def test_raw_preview_is_returned(self) -> None:
         response = self._make_response(["data: hello", "data: [DONE]"])
-        _, raw = _consume_sse(response)
+        _, raw = _consume_sse(response, ["content"])
         assert raw is not None
         assert "data: hello" in raw
 
